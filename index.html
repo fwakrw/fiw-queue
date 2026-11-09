@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#f4f4f7;--card:rgba(255,255,255,.72);--solid:#fff;--text:#16161a;--muted:#6b6b76;--line:rgba(0,0,0,.08);--in:rgba(0,0,0,.035);--pri:#16161a;--prit:#fff;--glow:.25;
+    --acc:linear-gradient(135deg,#7c5cff,#ff5ca8 55%,#ffb35c)}
+  body.dark{--bg:#0a0a0d;--card:rgba(255,255,255,.04);--solid:#141418;--text:#ededf0;--muted:#8b8b96;--line:rgba(255,255,255,.08);--in:rgba(255,255,255,.04);--pri:#fff;--prit:#0a0a0d;--glow:.5}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:'IBM Plex Sans Thai',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s}
+  body::before{content:'';position:fixed;left:-10%;right:-10%;top:-15%;height:65vh;z-index:-1;pointer-events:none;filter:blur(70px);opacity:var(--glow);
+    background:radial-gradient(40% 50% at 22% 35%,#7c5cff,transparent 70%),radial-gradient(35% 45% at 78% 25%,#ff5ca8,transparent 70%),radial-gradient(30% 40% at 55% 65%,#3d8bff,transparent 70%)}
+  .wrap{max-width:560px;margin:0 auto;padding:20px 14px 48px}
+  header{display:flex;align-items:center;justify-content:space-between}
+  .brand{display:flex;gap:12px;align-items:center}
+  .logo{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;font-size:22px;background:var(--acc);box-shadow:0 8px 30px rgba(124,92,255,.45)}
+  h1{margin:0;font-size:24px;font-weight:700;letter-spacing:-.02em;background:linear-gradient(180deg,var(--text) 40%,var(--muted));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:#a78bfa;text-transform:uppercase;margin-bottom:4px}
+  button{font:inherit;cursor:pointer;border:0;transition:transform .15s,opacity .2s,background .2s}
+  button:active{transform:scale(.97)} button:disabled{opacity:.5}
+  .switch{position:relative;width:64px;height:34px;flex:0 0 auto;cursor:pointer}
+  .switch input{opacity:0;width:0;height:0;position:absolute}
+  .track{position:absolute;inset:0;border-radius:999px;background:var(--in);border:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 9px;font-size:13px;backdrop-filter:blur(12px);transition:background .3s}
+  .knob{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:var(--pri);box-shadow:0 2px 10px rgba(0,0,0,.3);transition:transform .3s cubic-bezier(.4,1.4,.6,1)}
+  .knob{display:grid;place-items:center;font-size:14px}.knob::after{content:'☀️'}
+  .switch input:checked~.knob{transform:translateX(30px)}.switch input:checked~.knob::after{content:'🌙'}
+  .switch input:checked~.track{background:var(--acc)}
+  .seg{display:flex;gap:4px;padding:4px;margin:18px 0 14px;border-radius:16px;background:var(--card);border:1px solid var(--line);backdrop-filter:blur(12px)}
+  .seg button{flex:1;padding:10px;background:transparent;color:var(--muted);border-radius:12px;font-weight:600;font-size:15px}
+  .seg button.on{background:var(--pri);color:var(--prit);box-shadow:0 4px 20px rgba(0,0,0,.25)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:12px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);animation:up .45s ease both}
+  @keyframes up{from{opacity:0;transform:translateY(10px)}}
+  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 5px}
+  input,select,textarea{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--in);color:var(--text);font:inherit;font-size:16px;color-scheme:light dark;transition:border-color .2s,box-shadow .2s}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:#7c5cff;box-shadow:0 0 0 3px rgba(124,92,255,.25)}
+  select option{background:var(--solid)}
+  textarea{height:180px;resize:vertical;font-size:15px;line-height:1.65}
+  .row{display:flex;gap:10px}.row>div{flex:1;min-width:0}
+  .btn{width:100%;padding:13px;border-radius:999px;font-size:16px;font-weight:600;margin-top:10px}
+  .pri{background:var(--pri);color:var(--prit);box-shadow:0 8px 30px rgba(124,92,255,.3)}
+  .ghost{background:var(--in);color:var(--text);border:1px solid var(--line)}
+  .hint{display:inline-block;margin-top:10px;padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;background:var(--acc);color:#fff;animation:up .3s ease}
+  .hint:empty{display:none}
+  #msg{text-align:center;font-size:14px;min-height:20px;margin:6px 0 10px}.err{color:#ff6b6b}.ok{color:#3ddc97}
+  .sec-title{font-size:14px;margin:22px 4px 10px;color:var(--muted);font-weight:600}
+  .item{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:8px;backdrop-filter:blur(12px);animation:up .4s ease both}
+  .date{flex:0 0 52px;height:56px;border-radius:13px;background:var(--in);border:1px solid var(--line);display:grid;place-content:center;text-align:center;line-height:1.15}
+  .date b{font-size:20px}.date span{font-size:11px;color:var(--muted);text-transform:uppercase}
+  .body{flex:1;min-width:0;font-size:13px;color:var(--muted)}
+  .body b{display:block;color:var(--text);font-size:15px}
+  .body span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .side{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+  .pill{padding:5px 10px;border-radius:999px;font-size:12px;font-weight:600;color:#fff;white-space:nowrap}
+  .green{background:#00c875}.orange{background:#fdab3d}.red{background:#e2445c}.purple{background:#a25ddc}
+  .side button{padding:6px 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--pri);color:var(--prit)}
+  .pie{position:relative;width:220px;height:220px;border-radius:50%;background:var(--line);margin:6px auto 18px;box-shadow:0 0 70px rgba(124,92,255,.25)}
+  .hole{position:absolute;inset:28px;border-radius:50%;background:var(--solid);display:grid;place-content:center;text-align:center;gap:2px}
+  .hole span,.hole small{font-size:12px;color:var(--muted)}.hole b{font-size:24px;letter-spacing:-.02em}
+  .tiles{display:flex;gap:8px}
+  .tile{flex:1;padding:10px;border-radius:14px;background:var(--in);border:1px solid var(--line);font-size:12px;color:var(--muted)}
+  .tile b{display:block;font-size:17px;color:var(--text);margin-top:4px}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+  .empty{text-align:center;color:var(--muted);font-size:14px;padding:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand"><div class="logo">📸</div><div><div class="eyebrow">Fiw Photo</div><h1>คิวงาน</h1></div></div>
+  <label class="switch" title="ธีมมืด/สว่าง"><input type="checkbox" id="theme" onchange="toggleTheme()"><span class="track"></span><span class="knob"></span></label>
+</header>
+<nav class="seg"><button id="t1" class="on" onclick="tab(1)">📅 ลงคิว</button><button id="t2" onclick="tab(2)">💰 รายรับ</button></nav>
+
+<main id="v1">
+<section class="card">
+  <div class="eyebrow">01 · วันและเวลา</div>
+  <div class="row"><div><label>วันที่</label><input id="date" type="date"></div>
+  <div><label>ช่วงเวลา</label><input id="slot" list="slotList" onchange="slotTime()"></div></div>
+  <datalist id="slotList"><option>ครึ่งวันเช้า<option>ครึ่งวันบ่าย<option>ช่วงเช้า<option>ช่วงบ่าย<option>ช่วงเย็น<option>เต็มวัน<option>เหมาวันแบ่งเวลา</datalist>
+  <div class="row"><div><label>เริ่ม</label><input id="start" type="time"></div><div><label>จบ</label><input id="end" type="time"></div></div>
+</section>
+<section class="card">
+  <div class="eyebrow">02 · งาน</div>
+  <label>สถานที่</label><input id="place">
+  <div class="row"><div><label>หมวด</label><select id="cat" onchange="fillPkg()"></select></div>
+  <div style="flex:0 0 90px"><label>จำนวนคน</label><input id="people" type="number" min="1" value="1"></div></div>
+  <label>แพ็คเกจ</label><input id="pkg" list="pkgList" onchange="pkgPrice()"><datalist id="pkgList"></datalist>
+  <div class="hint" id="peopleHint"></div>
+</section>
+<section class="card">
+  <div class="eyebrow">03 · ค่าบริการ</div>
+  <div class="row"><div><label>ราคา</label><input id="price" type="number" inputmode="numeric" oninput="calc()"></div>
+  <div><label>มัดจำ</label><input id="deposit" type="number" inputmode="numeric" oninput="calc()"></div>
+  <div><label>คงเหลือ</label><input id="remain" type="number" inputmode="numeric"></div></div>
+</section>
+<section class="card">
+  <div class="eyebrow">04 · ลูกค้า</div>
+  <div class="row"><div><label>ชื่อเล่น</label><input id="nick"></div><div><label>เบอร์</label><input id="phone" type="tel"></div></div>
+  <label>ช่องทาง</label><input id="channel" list="chList">
+  <datalist id="chList"><option>LINE<option>Instagram<option>Facebook<option>TikTok<option>บอกต่อ</datalist>
+  <label>หมายเหตุ</label><input id="note">
+</section>
+<section class="card">
+  <div class="eyebrow">05 · ข้อความสรุปให้ลูกค้า</div>
+  <textarea id="sum" placeholder="กรอกข้อมูลด้านบน ข้อความจะขึ้นที่นี่"></textarea>
+  <div class="row"><div><button class="btn ghost" onclick="copySum()">📋 คัดลอก</button></div>
+  <div style="flex:1.6"><button id="saveBtn" class="btn pri" onclick="save()">บันทึก + คัดลอก</button></div></div>
+</section>
+<div id="msg"></div>
+<div class="sec-title">คิวที่จะถึง</div>
+<div id="up" class="empty">กำลังโหลด…</div>
+</main>
+
+<main id="v2" hidden>
+<section class="card">
+  <div class="eyebrow">เดือน · ลบค่าออก = ดูทั้งหมด</div>
+  <input id="ym" type="month" onchange="loadIncome()">
+</section>
+<section class="card">
+  <div class="pie" id="pie"><div class="hole"><span>รับเงินแล้ว</span><b id="sGot">-</b><small>จากยอดงาน <span id="sAll">-</span></small></div></div>
+  <div class="tiles">
+    <div class="tile"><span class="dot" style="background:#fdab3d"></span>มัดจำ<b id="sDep">-</b></div>
+    <div class="tile"><span class="dot" style="background:#00c875"></span>จ่ายครบ<b id="sPaid">-</b></div>
+    <div class="tile"><span class="dot" style="background:#e2445c"></span>คงเหลือ<b id="sRem">-</b></div>
+  </div>
+</section>
+<div class="sec-title">รายการงาน</div>
+<div id="inc"></div>
+</main>
+</div>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script>
+// ====== ตั้งค่า 2 บรรทัดนี้ ======
+const LIFF_ID = '2010490440-GiMcCEDB';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzPHsVPDzhjXOm1ILaJJxmiK8wyA1t8m_dmOF0CHjBDkA6aAavLKQtol4ehoKVtxofrgA/exec';
+// ================================
+const ready = liff.init({ liffId: LIFF_ID }).then(() => {
+  if (!liff.isLoggedIn()) { liff.login(); return new Promise(() => {}); }
+});
+async function api(action, args) {
+  await ready;
+  const r = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action, args, token: liff.getIDToken() }) });
+  const j = await r.json();
+  if (j.error && j.error.startsWith('TOKEN_INVALID')) { liff.logout(); location.reload(); }
+  if (j.error) throw new Error(j.error);
+  return j.result;
+}
+// ทำให้โค้ดเดิมที่ใช้ google.script.run ทำงานผ่าน api() ได้เลย
+window.google = { script: { get run() {
+  let ok = () => {}, fail = e => msg(e.message, 1);
+  const p = new Proxy({}, { get: (t, k) => k === 'withSuccessHandler' ? (f => (ok = f, p))
+    : k === 'withFailureHandler' ? (f => (fail = f, p)) : (...a) => api(k, a).then(ok, fail) });
+  return p;
+} } };
+// ส่งข้อความสรุปเข้าแชท LINE ที่เปิดแอปนี้ขึ้นมา (เช่นแชทกับ OA ของตัวเอง)
+async function sendToChat(text) {
+  try {
+    if (!liff.isInClient() || !text) return false;
+    await liff.sendMessages([{ type: 'text', text }]);
+    return true;
+  } catch (e) { return false; }
+}
+</script>
+<script>
+const $ = id => document.getElementById(id);
+const FIELDS = ['date','slot','start','end','place','cat','pkg','price','deposit','remain','nick','phone','channel','note','people'];
+let PKG = [];
+
+google.script.run.withSuccessHandler(p => {
+  PKG = p;
+  $('cat').innerHTML = '<option value=""></option>' + [...new Set(p.map(x => x.cat))].map(c => `<option>${c}</option>`).join('');
+  fillPkg();
+}).getPackages();
+loadUp();
+function setTheme(d) { document.body.classList.toggle('dark', d); $('theme').checked = d; }
+function toggleTheme() { const d = !document.body.classList.contains('dark'); setTheme(d); try { localStorage.theme = d ? 'dark' : 'light'; } catch (e) {} }
+(() => { let t; try { t = localStorage.theme; } catch (e) {} setTheme(t ? t === 'dark' : true); })();
+
+function fillPkg() {
+  const c = $('cat').value;
+  $('pkgList').innerHTML = PKG.filter(p => !c || p.cat === c).map(p => `<option value="${p.name}">${p.price}`).join('');
+}
+function pkgPrice() {
+  const p = PKG.find(p => p.name === $('pkg').value && (!$('cat').value || p.cat === $('cat').value));
+  if (p && p.hours) { $('price').value = p.price; calc(); }
+}
+function calc() { const p = +$('price').value, d = +$('deposit').value || 0; if (p) $('remain').value = p - d; }
+function msg(t, err) { $('msg').className = err ? 'err' : 'ok'; $('msg').textContent = t; }
+
+// ---------- สร้างข้อความสรุป ----------
+const pad = n => String(n).padStart(2, '0');
+const EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const SLOT = { 'เช้า': ['07:00','12:00'], 'บ่าย': ['13:00','18:00'], 'เย็น': ['18:00','20:00'] };
+const tShort = t => t ? t.replace(/^0/, '').replace(':', '.') : '';
+
+function slotTime() {
+  const s = $('slot').value;
+  if (!$('start').value) for (const k in SLOT) if (s.includes(k)) { [$('start').value, $('end').value] = SLOT[k]; break; }
+  sum();
+}
+const groupLabel = n => n == 2 ? 'ถ่ายคู่' : n >= 3 ? 'ถ่ายกลุ่ม' : '';
+const peopleText = n => groupLabel(n) ? `${groupLabel(n)} ${n} คน` : '';
+function sum() {
+  $('peopleHint').textContent = groupLabel($('people').value);
+  const v = id => $(id).value.trim();
+  const dt = v('date') ? (([y, m, d]) => `${+d} ${EN[m - 1]} ${String(y).slice(2)}`)(v('date').split('-')) : '';
+  const time = v('start') ? `${tShort(v('start'))}-${tShort(v('end'))}` : '';
+  const n = x => Number(x).toLocaleString('th-TH');
+  const price = v('price') ? `${n(v('price'))}${v('deposit') ? ` มัดจำ ${n(v('deposit'))} คงเหลือ ${n(v('remain'))}` : ''}` : '';
+  const ppl = +v('people') || 1;
+  const pkgLine = [v('cat'), v('pkg')].filter(Boolean).join(' ');
+  const deal = [pkgLine && 'แพ็คเกจ ' + pkgLine, (groupLabel(ppl) || 'ถ่ายเดี่ยว') + ` ${ppl} คน`, price].filter(Boolean).join(' | ');
+  const top = ['ลงคิว ' + dt, v('place'), [v('slot'), time].filter(Boolean).join(' '), deal].filter(Boolean);
+  const who = [v('nick'), v('phone')].filter(Boolean).join(' ');
+  $('sum').value = top.join('\n') + (who ? '\n\n' + who : '');
+}
+function copySum() {
+  const t = $('sum'); t.select(); t.setSelectionRange(0, 99999);
+  let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+  if (!ok && navigator.clipboard) navigator.clipboard.writeText(t.value).then(() => msg('คัดลอกแล้ว ✓'));
+  else msg(ok ? 'คัดลอกแล้ว ✓' : 'คัดลอกไม่ได้ กดค้างที่ข้อความเพื่อคัดลอกเอง', !ok);
+}
+document.addEventListener('input', e => { if (e.target.closest('#v1') && e.target.id !== 'sum') sum(); });
+document.addEventListener('change', e => { if (e.target.closest('#v1') && e.target.id !== 'sum') sum(); });
+function save(force) {
+  const d = {}; FIELDS.forEach(f => d[f] = $(f).value.trim()); d.force = !!force;
+  if (!d.date || !d.start || !d.end || !d.nick) return msg('กรอก วันที่ / เวลา / ชื่อเล่น ให้ครบ', 1);
+  $('saveBtn').disabled = true; msg('กำลังบันทึก…');
+  google.script.run.withSuccessHandler(res => {
+    if (res.conflict) {
+      if (confirm('เวลาชนกับ:\n' + res.conflict.join('\n') + '\n\nบันทึกต่อไหม?')) return save(true);
+      $('saveBtn').disabled = false; return msg('ยกเลิกแล้ว', 1);
+    }
+    $('saveBtn').disabled = false; const txt = $('sum').value; copySum();
+    sendToChat(txt).then(sent => msg(sent ? 'บันทึกแล้ว ✓ ส่งข้อความสรุปเข้าแชท LINE แล้ว' : 'บันทึกแล้ว ✓ คัดลอกข้อความแล้ว'));
+    FIELDS.forEach(f => $(f).value = ''); $('people').value = 1; $('peopleHint').textContent = ''; loadUp();
+  }).withFailureHandler(e => { $('saveBtn').disabled = false; msg(e.message, 1); }).saveBooking(d);
+}
+
+function loadUp() {
+  google.script.run.withSuccessHandler(list => {
+    $('up').className = list.length ? '' : 'empty';
+    $('up').innerHTML = list.length ? list.map(b => item(b.d, b.m, b.nick + (b.grp ? ' · ' + b.grp : ''),
+      [b.time + ' · ' + b.place, b.pkg], b.paid ? pill('จ่ายครบ', 'green') : pill('เหลือ ' + fmt(b.remain), 'orange'))).join('') : 'ยังไม่มีคิว ✨';
+  }).getUpcoming();
+}
+
+// ---------- หน้ารายรับ ----------
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const pill = (t, c) => `<span class="pill ${c}">${t}</span>`;
+const item = (d, m, title, lines, side) => `<div class="item"><div class="date"><b>${d}</b><span>${m}</span></div>
+  <div class="body"><b>${esc(title)}</b>${lines.filter(Boolean).map(l => `<span>${esc(l)}</span>`).join('')}</div><div class="side">${side}</div></div>`;
+const fmt = n => Number(n || 0).toLocaleString('th-TH');
+function tab(n) {
+  $('v1').hidden = n !== 1; $('v2').hidden = n !== 2;
+  $('t1').classList.toggle('on', n === 1); $('t2').classList.toggle('on', n === 2);
+  if (n === 2) {
+    if (!$('ym').dataset.init) { const d = new Date(); $('ym').value = d.getFullYear() + '-' + pad(d.getMonth() + 1); $('ym').dataset.init = 1; }
+    loadIncome();
+  }
+}
+function pie(parts) {
+  const tot = parts.reduce((s, p) => s + p.v, 0);
+  if (!tot) return 'var(--line)';
+  let acc = 0;
+  return 'conic-gradient(' + parts.map(p => { const a = acc / tot * 360; acc += p.v; return `${p.c} ${a}deg ${acc / tot * 360}deg`; }).join(',') + ')';
+}
+function loadIncome() {
+  $('inc').textContent = 'กำลังโหลด…';
+  google.script.run.withFailureHandler(e => {
+    $('inc').innerHTML = '<span class="err">โหลดไม่สำเร็จ: ' + e.message + '</span>';
+  }).withSuccessHandler(res => {
+    if (!res) return $('inc').innerHTML = '<span class="err">ไม่ได้รับข้อมูลจากชีต — อัปเดต Code.gs และทำเวอร์ชันใหม่หรือยัง?</span>';
+    const r = typeof res === 'string' ? JSON.parse(res) : res;
+    $('sDep').textContent = fmt(r.deposit); $('sPaid').textContent = fmt(r.paid); $('sRem').textContent = fmt(r.remain);
+    $('sGot').textContent = fmt(r.deposit + r.paid); $('sAll').textContent = fmt(r.deposit + r.paid + r.remain);
+    $('pie').style.background = pie([{ v: r.deposit, c: '#fdab3d' }, { v: r.paid, c: '#00c875' }, { v: r.remain, c: '#e2445c' }]);
+    $('inc').className = r.list.length ? '' : 'empty';
+    $('inc').innerHTML = r.list.length ? r.list.map(b => item(b.d, b.m, b.nick, [b.pkg + ' · ' + fmt(b.price) + ' บาท', b.paid ? '' : 'มัดจำ ' + fmt(b.dep) + ' · เหลือ ' + fmt(b.rem)],
+      b.paid ? pill('จ่ายครบ', 'green') : pill('ค้างชำระ', 'orange') + `<button onclick="paid(${b.row},this)">รับครบแล้ว</button>`)).join('') : 'ไม่มีงานในช่วงนี้';
+  }).getIncome($('ym').value);
+}
+function paid(row, btn) {
+  if (!confirm('ยืนยันว่ารับเงินครบแล้ว?')) return;
+  btn.disabled = true;
+  google.script.run.withSuccessHandler(loadIncome).withFailureHandler(e => { btn.disabled = false; alert(e.message); }).markPaid(row);
+}
+</script>
+</body>
+</html>
