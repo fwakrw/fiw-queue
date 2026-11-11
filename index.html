@@ -318,7 +318,33 @@ function delivBar(b) {
   const edit = b.start !== undefined ? `<button class="mini" onclick="openEdit(${b.row})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>แก้ไข</button>` : '';
   const btn = b.delivered ? `<button class="mini" onclick="setDelivered(${b.row},false)">ยกเลิก</button>`
     : shot ? `<button class="mini go" onclick="setDelivered(${b.row},true)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5L20 7"/></svg>ส่งงานแล้ว</button>` : '';
-  return `<div class="acts"><span class="pill ${c}">${t}</span><span style="display:flex;gap:6px">${edit}${btn}</span></div>`;
+  const pay = b.paid === false ? `<button class="mini" onclick="setPaid(${b.row})">฿ จ่ายครบ</button>` : '';
+  return `<div class="acts"><span class="pill ${c}">${t}</span><span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${pay}${edit}${btn}</span></div>`;
+}
+async function setPaid(row) {
+  if (!confirm('ยืนยันว่าลูกค้าจ่ายเงินครบแล้ว?')) return;
+  try {
+    await api('markPaid', row); msg('บันทึกว่าจ่ายครบแล้ว ✓');
+    Object.keys(cache).forEach(k => delete cache[k]);
+    if ($('vInc').hidden) loadMonth(true); else loadIncome();
+  } catch (e) { msg(e.message, 1); }
+}
+async function loadIncome() {
+  $('inc').innerHTML = '<div class="empty">กำลังโหลด…</div>';
+  try {
+    const res = await api('getIncome', $('ym').value);
+    const r = typeof res === 'string' ? JSON.parse(res) : res;
+    const cs = getComputedStyle(document.documentElement), cv = k => cs.getPropertyValue(k).trim();
+    $('sDep').textContent = fmt(r.deposit); $('sPaid').textContent = fmt(r.paid); $('sRem').textContent = fmt(r.remain);
+    $('sGot').textContent = fmt(r.deposit + r.paid); $('sAll').textContent = fmt(r.deposit + r.paid + r.remain);
+    const all = r.deposit + r.paid + r.remain; let at = 0;
+    $('pie').style.background = all ? 'conic-gradient(' + [[r.deposit, '--m'], [r.paid, '--okTx'], [r.remain, '--a']].map(([v, k]) => {
+      const from = at; at += v / all * 360; return `${cv(k)} ${from}deg ${at}deg`; }).join(',') + ')' : '';
+    $('inc').innerHTML = r.list.length ? r.list.map(b => `<div class="item"><div style="width:38px;text-align:center"><b style="font-size:18px">${b.d}</b><div class="s">${esc(b.m)}</div></div>
+      <div style="flex:1;min-width:0"><div class="row"><span class="t">${esc(b.nick)}</span>${b.cancelled ? '<span class="pill bad">ยกเลิก</span>' : b.paid ? '<span class="pill ok">จ่ายครบ</span>' : `<span class="pill warn">เหลือ ${fmt(b.rem)}</span>`}</div>
+      <div class="s">${esc(b.pkg)} · ${fmt(b.price)} บาท${b.paid ? '' : ' · มัดจำ ' + fmt(b.dep)}</div>
+      ${b.paid || b.cancelled ? '' : `<div class="acts"><span></span><button class="mini go" onclick="setPaid(${b.row})">฿ จ่ายครบ</button></div>`}</div></div>`).join('') : '<div class="empty">ไม่มีงานในช่วงนี้</div>';
+  } catch (e) { $('inc').innerHTML = '<div class="empty">โหลดไม่สำเร็จ: ' + esc(e.message) + '</div>'; }
 }
 async function setDelivered(row, on) {
   if (!confirm(on ? 'ยืนยันว่าส่งงานเรียบร้อยแล้ว?' : 'ยกเลิกสถานะส่งงาน?')) return;
