@@ -247,8 +247,8 @@
   </div>
   <div id="receiptWrap" hidden>
     <img class="receipt" id="receiptImg" alt="ใบยืนยันคิว">
-    <div class="lbl" style="text-align:center;margin:8px 0">กดค้างที่รูปเพื่อบันทึก หรือใช้ปุ่มด้านล่าง</div>
-    <div class="rbtns"><button class="sec2" onclick="downloadReceipt()">บันทึกรูป</button><button class="sec2" id="shareBtn" onclick="shareReceipt()">แชร์รูป</button></div>
+    <div class="lbl" id="receiptNote" style="text-align:center;margin:8px 0"></div>
+    <div class="rbtns"><button class="sec2" id="openBtn" onclick="openReceipt()" hidden>เปิดในเบราว์เซอร์เพื่อบันทึก</button></div>
   </div>
   <div class="bubble" id="doneBubble"></div>
   <div style="margin-top:auto;display:flex;gap:10px">
@@ -276,9 +276,15 @@ async function api(action, ...args) {
   if (j.error) throw new Error(j.error);
   return j.result;
 }
-async function sendToChat(text) {
-  try { if (!liff.isInClient() || !text) return false; await liff.sendMessages([{ type: 'text', text }]); return true; }
-  catch (e) { return false; }
+async function sendToChat(text, img) {
+  if (!liff.isInClient() || !text) return false;
+  const msgs = [{ type: 'text', text }];
+  if (img) msgs.push({ type: 'image', originalContentUrl: img, previewImageUrl: img });
+  try { await liff.sendMessages(msgs); return true; }
+  catch (e) {
+    if (!img) return false;
+    try { await liff.sendMessages(msgs.slice(0, 1)); msg('ส่งรูปเข้าแชทไม่ได้ ส่งเฉพาะข้อความ', 1); return true; } catch (e2) { return false; }
+  }
 }
 
 // ---------- helpers ----------
@@ -514,13 +520,14 @@ async function save(force) {
       return;
     }
     const txt = sumText();
-    const sent = await sendToChat(txt);
+    btn.textContent = 'กำลังสร้างใบเสร็จ…';
+    const rc = await buildReceipt(d);
+    const sent = await sendToChat(txt, rc && rc.url);
     if (!sent) copyText(txt);
     $('doneMsg').innerHTML = sent ? 'ส่งข้อความสรุปเข้าแชทแล้ว<br>กดค้างที่ข้อความในแชทเพื่อคัดลอกส่งลูกค้า' : 'คัดลอกข้อความสรุปแล้ว<br>นำไปวางในแชทลูกค้าได้เลย';
     const dd = pd(d.date);
     $('doneWho').textContent = `${d.nick} · ${dd.getDate()} ${TH_MS[dd.getMonth()]} ${d.start.replace(':', '.')}–${d.end.replace(':', '.')}`;
     $('doneBubble').textContent = txt;
-    showReceipt(d);
     $('doneTitle').textContent = editing ? 'แก้ไขคิวแล้ว' : 'ลงคิวแล้ว';
     $('done').classList.add('show'); closeForm();
     $('sheet').dataset.fresh = '1'; F.editRow = 0;
@@ -535,7 +542,7 @@ function closeDone() { $('done').classList.remove('show'); }
 // ---------- ใบเสร็จ (รูปภาพ) ----------
 const TH_DS = ['อา','จ','อ','พ','พฤ','ศ','ส'];
 const fmtPhone = p => { const x = String(p).replace(/\D/g, ''); return x.length === 10 ? `${x.slice(0, 3)}-${x.slice(3, 6)}-${x.slice(6)}` : p; };
-let receiptBlob = null, receiptName = 'receipt.png';
+let receiptBlob = null, receiptName = 'receipt.jpg';
 async function makeReceipt(d) {
   const MONO = '"IBM Plex Mono", monospace', TH = 'Anuphan, sans-serif';
   await Promise.all(['700 52px "IBM Plex Mono"', '500 34px "IBM Plex Mono"', '400 34px Anuphan', '600 34px Anuphan', '700 44px Anuphan']
@@ -608,61 +615,29 @@ async function makeReceipt(d) {
   ctx.fill();
   ctx.textBaseline = 'alphabetic';
   draw(true);
-  receiptName = `FiwPhoto-${no}.png`;
-  return new Promise(res => cv.toBlob(b => res(b), 'image/png'));
+  receiptName = `FiwPhoto-${no}.jpg`;
+  return new Promise(res => cv.toBlob(b => res(b), 'image/jpeg', 0.92));
 }
-async function showReceipt(d) {
-  $('receiptWrap').hidden = true;
+let receiptView = '';
+// สร้างรูป → แสดงในหน้า "ลงคิวแล้ว" → อัปโหลดเข้า Drive (คืนลิงก์รูปสำหรับส่งเข้าแชท)
+async function buildReceipt(d) {
+  $('receiptWrap').hidden = true; receiptView = '';
   try {
     receiptBlob = await makeReceipt(d);
     $('receiptImg').src = URL.createObjectURL(receiptBlob);
-    const f = new File([receiptBlob], receiptName, { type: 'image/png' });
-    $('shareBtn').hidden = !(navigator.canShare && navigator.canShare({ files: [f] }));
-    $('receiptWrap').hidden = false;
-  } catch (e) { msg('สร้างรูปใบเสร็จไม่สำเร็จ', 1); }
+    $('receiptWrap').hidden = false; $('openBtn').hidden = true;
+    $('receiptNote').textContent = 'กำลังอัปโหลดใบเสร็จ…';
+    const b64 = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(String(fr.result).split(',')[1]); fr.readAsDataURL(receiptBlob); });
+    const up = await api('uploadReceipt', b64, receiptName);
+    receiptView = up.view; $('openBtn').hidden = false;
+    $('receiptNote').textContent = 'ส่งรูปใบเสร็จเข้าแชทแล้ว กดค้างที่รูปในแชทเพื่อบันทึกหรือส่งต่อ';
+    return up;
+  } catch (e) { $('receiptNote').textContent = 'อัปโหลดใบเสร็จไม่สำเร็จ: ' + e.message; return null; }
 }
-function downloadReceipt() {
-  if (!receiptBlob) return;
-  const a = document.createElement('a'); a.href = URL.createObjectURL(receiptBlob); a.download = receiptName;
-  document.body.appendChild(a); a.click(); a.remove();
-  msg('ถ้าไม่ได้บันทึก ให้กดค้างที่รูปแล้วเลือกบันทึก');
+function openReceipt() {
+  if (!receiptView) return;
+  try { liff.openWindow({ url: receiptView, external: true }); } catch (e) { location.href = receiptView; }
 }
-async function shareReceipt() {
-  try { await navigator.share({ files: [new File([receiptBlob], receiptName, { type: 'image/png' })] }); }
-  catch (e) { if (e.name !== 'AbortError') msg('แชร์ไม่ได้ ลองกดค้างที่รูปแทน', 1); }
-}
-
-// ---------- income ----------
-function pie(parts) {
-  const tot = parts.reduce((s, p) => s + p.v, 0);
-  if (!tot) return 'var(--line)';
-  let acc = 0;
-  return 'conic-gradient(' + parts.map(p => { const a = acc / tot * 360; acc += p.v; return `${p.c} ${a}deg ${acc / tot * 360}deg`; }).join(',') + ')';
-}
-async function loadIncome() {
-  $('inc').innerHTML = '<div class="empty">กำลังโหลด…</div>';
-  try {
-    const res = await api('getIncome', $('ym').value);
-    const r = typeof res === 'string' ? JSON.parse(res) : res;
-    const cs = getComputedStyle(document.body);
-    $('sDep').textContent = fmt(r.deposit); $('sPaid').textContent = fmt(r.paid); $('sRem').textContent = fmt(r.remain);
-    $('sGot').textContent = fmt(r.deposit + r.paid); $('sAll').textContent = fmt(r.deposit + r.paid + r.remain);
-    $('pie').style.background = pie([{ v: r.deposit, c: cs.getPropertyValue('--m') }, { v: r.paid, c: cs.getPropertyValue('--okTx') }, { v: r.remain, c: cs.getPropertyValue('--a') }]);
-    $('inc').innerHTML = r.list.length ? r.list.map(b => `<div class="item"><div style="width:44px;text-align:center;flex:none"><div class="lbl">${esc(b.m)}</div><b style="font-size:18px">${esc(b.d)}</b></div>
-      <div style="flex:1;min-width:0"><div class="t">${esc(b.nick)}</div><div class="s">${esc(b.pkg)} · ${fmt(b.price)} บาท</div>${b.paid ? '' : `<div class="s">มัดจำ ${fmt(b.dep)} · เหลือ ${fmt(b.rem)}</div>`}</div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">${b.cancelled ? '<span class="pill bad">ยกเลิก</span>' : b.paid ? '<span class="pill ok">จ่ายครบ</span>' : `<span class="pill warn">ค้างชำระ</span><button class="chip" style="min-height:34px" onclick="paid(${b.row},this)">รับครบแล้ว</button>`}</div></div>`).join('')
-      : '<div class="empty">ไม่มีงานในช่วงนี้</div>';
-  } catch (e) { $('inc').innerHTML = `<div class="empty" style="color:#E5533D">โหลดไม่สำเร็จ: ${esc(e.message)}</div>`; }
-}
-async function paid(row, btn) {
-  if (!confirm('ยืนยันว่ารับเงินครบแล้ว?')) return;
-  btn.disabled = true;
-  try { await api('markPaid', row); loadIncome(); Object.keys(cache).forEach(k => delete cache[k]); }
-  catch (e) { btn.disabled = false; msg(e.message, 1); }
-}
-
-loadMonth();
-loadPending();
 </script>
 </body>
 </html>
