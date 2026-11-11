@@ -278,13 +278,13 @@ async function api(action, ...args) {
 }
 async function sendToChat(text, img) {
   if (!liff.isInClient() || !text) return false;
-  const msgs = [{ type: 'text', text }];
-  if (img) msgs.push({ type: 'image', originalContentUrl: img, previewImageUrl: img });
-  try { await liff.sendMessages(msgs); return true; }
-  catch (e) {
-    if (!img) return false;
-    try { await liff.sendMessages(msgs.slice(0, 1)); msg('ส่งรูปเข้าแชทไม่ได้ ส่งเฉพาะข้อความ', 1); return true; } catch (e2) { return false; }
+  // ส่งเฉพาะรูปใบเสร็จ · ถ้าไม่มีรูป/ส่งรูปไม่ได้ ค่อยส่งข้อความแทน
+  const textMsg = [{ type: 'text', text }];
+  if (img) {
+    try { await liff.sendMessages([{ type: 'image', originalContentUrl: img, previewImageUrl: img }]); return true; }
+    catch (e) { msg('ส่งรูปเข้าแชทไม่ได้ ส่งเป็นข้อความแทน', 1); }
   }
+  try { await liff.sendMessages(textMsg); return true; } catch (e) { return false; }
 }
 
 // ---------- helpers ----------
@@ -524,7 +524,7 @@ async function save(force) {
     const rc = await buildReceipt(d);
     const sent = await sendToChat(txt, rc && rc.url);
     if (!sent) copyText(txt);
-    $('doneMsg').innerHTML = sent ? 'ส่งข้อความสรุปเข้าแชทแล้ว<br>กดค้างที่ข้อความในแชทเพื่อคัดลอกส่งลูกค้า' : 'คัดลอกข้อความสรุปแล้ว<br>นำไปวางในแชทลูกค้าได้เลย';
+    $('doneMsg').innerHTML = sent ? (rc ? 'ส่งรูปใบเสร็จเข้าแชทแล้ว<br>กดค้างที่รูปในแชทเพื่อบันทึกหรือส่งต่อลูกค้า' : 'ส่งข้อความสรุปเข้าแชทแล้ว<br>กดค้างที่ข้อความในแชทเพื่อคัดลอกส่งลูกค้า') : 'คัดลอกข้อความสรุปแล้ว<br>นำไปวางในแชทลูกค้าได้เลย';
     const dd = pd(d.date);
     $('doneWho').textContent = `${d.nick} · ${dd.getDate()} ${TH_MS[dd.getMonth()]} ${d.start.replace(':', '.')}–${d.end.replace(':', '.')}`;
     $('doneBubble').textContent = txt;
